@@ -16,7 +16,7 @@ class JiraAlertsInstallHandler(admin.MConfigHandler):
 
     def handleList(self, confInfo):
         jira_settings = get_jira_settings(splunk.getLocalServerInfo(), self.getSessionKey())
-        item = confInfo['jira']
+        item = confInfo['alert_manager-jira']
         item['jira_url'] = jira_settings.get('jira_url', 'http://your.server/')
         item['jira_username'] = jira_settings.get('jira_username')
         item['jira_password'] = PASSWORD_PLACEHOLDER
@@ -25,7 +25,7 @@ class JiraAlertsInstallHandler(admin.MConfigHandler):
         item['import'] = '0'
 
     def handleEdit(self, confInfo):
-        if self.callerArgs.id == 'jira':
+        if self.callerArgs.id == 'alert_manager-jira':
             jira_settings = get_jira_settings(splunk.getLocalServerInfo(), self.getSessionKey())
             if 'jira_url' in self.callerArgs:
                 jira_settings['jira_url'] = self.callerArgs['jira_url'][0]

@@ -24,6 +24,12 @@ def send_message(payload):
             "description": config.get('description'),
             "issuetype": {
                 "name": config.get('issue_type')
+            },
+            "priority": {
+                "name": config.get('priority')
+            },
+            "assignee": {
+                "name": config.get('assignee')
             }
         }
     })

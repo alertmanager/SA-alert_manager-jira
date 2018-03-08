@@ -87,6 +87,12 @@ def get_priorities(jira_settings):
         verify=False)
     return response.json()
 
+def get_assignees(jira_settings):
+    response = requests.get(
+        url=jira_url(jira_settings, '/assignee'),
+        auth=(jira_settings.get('jira_username'), jira_settings.get('jira_password')),
+        verify=False)
+    return response.json()    
 
 def select_choice(value, label):
     # TODO: XML escape content

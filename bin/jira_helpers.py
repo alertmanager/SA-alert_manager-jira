@@ -25,13 +25,14 @@ def validate_jira_settings(jira_settings):
 
 def update_jira_settings(jira_settings, server_uri, session_key):
     r = requests.post(
-        url=server_uri+'/servicesNS/nobody/SA-alert_manager-jira/alerts/alert_actions/jira?output_mode=json',
+        url=server_uri+'/servicesNS/nobody/SA-alert_manager-jira/alerts/alert_actions/alert_manager-jira?output_mode=json',
         data={
             'param.jira_url': jira_settings.get('jira_url'),
             'param.jira_username': jira_settings.get('jira_username'),
             'param.project_key': jira_settings.get('project_key', ''),
             'param.issue_type': jira_settings.get('issue_type', ''),
-            'param.priority': jira_settings.get('priority', '')
+            'param.priority': jira_settings.get('priority', ''),
+            'param.assignee': jira_settings.get('assignee', '')
         },
         headers=splunkd_auth_header(session_key),
         verify=False).json()
@@ -64,7 +65,7 @@ def get_jira_username(server_uri, session_key):
     return get_jira_action_config(server_uri, session_key).get('jira_username')
 
 def get_jira_action_config(server_uri, session_key):
-    url = server_uri + '/servicesNS/nobody/SA-alert_manager-jira/alerts/alert_actions/jira?output_mode=json'
+    url = server_uri + '/servicesNS/nobody/SA-alert_manager-jira/alerts/alert_actions/alert_manager-jira?output_mode=json'
     result = requests.get(url=url, headers=splunkd_auth_header(session_key), verify=False)
     return json.loads(result.text)['entry'][0]['content']
 
@@ -72,5 +73,5 @@ def jira_url(jira_settings, endpoint):
     return '%s/rest/api/latest%s' % (jira_settings.get('jira_url'), endpoint)
 
 def update_jira_dialog(content, server_uri, session_key):
-    uri = server_uri + '/servicesNS/nobody/SA-alert_manager-jira/data/ui/alerts/jira'
+    uri = server_uri + '/servicesNS/nobody/SA-alert_manager-jira/data/ui/alerts/alert_manager-jira'
     requests.post(url=uri, data={'eai:data': content}, headers=splunkd_auth_header(session_key), verify=False)
