@@ -1,8 +1,10 @@
-# JIRA Alert Add-on
+# Alert Manager JIRA Add-on
 
 ## Introduction
 
 This add-on allows Splunk to create JIRA issues from Alert Manager https://splunkbase.splunk.com/app/2665/
+
+When an Alert Manager Incident is sent to JIRA with this add-on, the Alert Manager incident's external_reference_id is updated with the JIRA Issue ID.
 
 This add-on is based on the Splunk Add-on for Atlassian JIRA Alerts https://splunkbase.splunk.com/app/2888/
 
