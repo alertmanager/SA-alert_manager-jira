@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+local/
+local.meta
+.DS_Store
+_work/
+appserver/src/custom*
+*.log
+MANIFEST
+RELEASE-VERSION
+.coverage
+nosetests.xml
