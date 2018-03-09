@@ -1,6 +1,6 @@
 <setup>
     <block title="Alert Manager JIRA Alert Actions">
-        <text>Configure JIRA Alert Actions</text>
+        <text>Configure Alert Manager JIRA Alert Actions</text>
     </block>
 
     <block title="Server" endpoint="admin/jira_alerts_install" entity="alert_manager-jira">

@@ -34,14 +34,23 @@ TEMPLATE = '''
             <span class="help-block">Select the issue priority.</span>
         </div>
     </div>
+
+    <div class="control-group">
+        <label class="control-label" for="summary">Assignee</label>
+        <div class="controls">
+            <input type="text" name="action.jira.param.assignee" id="jira_assignee" />
+            <span class="help-block">Enter an assignee for the Issue.</span>
+        </div>
+    </div>
+
     <div class="control-group">
         <label class="control-label" for="summary">Summary</label>
-
         <div class="controls">
             <input type="text" name="action.jira.param.summary" id="summary" />
             <span class="help-block">Enter a summary of the Issue.</span>
         </div>
     </div>
+
     <div class="control-group">
         <label class="control-label" for="description">Description</label>
 
@@ -65,7 +74,6 @@ def generate_jira_dialog(jira_settings, server_uri, session_key):
     )
     update_jira_dialog(new_content, server_uri, session_key)
 
-
 def get_projects(jira_settings):
     response = requests.get(
         url=jira_url(jira_settings, '/project'),
@@ -85,14 +93,7 @@ def get_priorities(jira_settings):
         url=jira_url(jira_settings, '/priority'),
         auth=(jira_settings.get('jira_username'), jira_settings.get('jira_password')),
         verify=False)
-    return response.json()
-
-def get_assignees(jira_settings):
-    response = requests.get(
-        url=jira_url(jira_settings, '/assignee'),
-        auth=(jira_settings.get('jira_username'), jira_settings.get('jira_password')),
-        verify=False)
-    return response.json()    
+    return response.json()   
 
 def select_choice(value, label):
     # TODO: XML escape content

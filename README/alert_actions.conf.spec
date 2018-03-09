@@ -4,5 +4,5 @@ param.jira_username = <string>
 param.jira_password = <string>
 param.issue_type = <string>
 param.project_key = <string>
-param.priorty = <string>
+param.priority = <string>
 param.assignee = <string>
