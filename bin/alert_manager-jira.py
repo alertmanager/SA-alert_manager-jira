@@ -49,7 +49,6 @@ def send_message(payload, sessionKey):
         print >> sys.stderr, "ERROR Error sending message: %s" % e
         return False
 
-
     # Get Results
     resultJSON = result.json()
         
@@ -58,12 +57,11 @@ def send_message(payload, sessionKey):
 
     # Fetch Alert Manager incident_id (param.incident_id)
     incident_id=config.get('incident_id')
-    incident_key = getIncidentKey(incident_id, sessionKey)
-
-    with open('/tmp/out2.txt', 'w') as outfile2:
-            outfile2.write(incident_key)       
+    incident_key = getIncidentKey(incident_id, sessionKey)    
 
     setIncidentExternalReferenceId(issue_key, incident_key, sessionKey)
+
+    setIncidentComment(incident_id, issue_key, sessionKey)
 
 
     
@@ -85,14 +83,6 @@ def setIncidentExternalReferenceId(issue_key, incident_key, sessionKey):
 
     incident['external_reference_id'] = issue_key
 
-    with open('/tmp/out3.txt', 'w') as outfile2:
-            outfile2.write(uri)       
-
-    #if "_user" in incident:
-    #    del(incident["_user"])
-    #if "_key" in incident:
-    #    del(incident["_key"])
-
     getRestData(uri, sessionKey, json.dumps(incident))
 
 def getRestData(uri, sessionKey, data = None, output_mode = 'json'):
@@ -108,19 +98,29 @@ def getRestData(uri, sessionKey, data = None, output_mode = 'json'):
             else:
                 serverResponse, serverContent = rest.simpleRequest(uri, sessionKey=sessionKey, jsonargs=data, getargs={'output_mode': 'json'})
     except:
-        #log.info("An error occurred or no data was returned from the server query.")
         serverContent = None
 
-    #log.debug("serverResponse: %s" % serverResponse)
-    #log.debug("serverContent: %s" % serverContent)
     try:
         returnData = json.loads(serverContent)
     except:
-        #log.info("An error occurred or no data was returned from the server query.")
         returnData = []
 
     return returnData
 
+
+def setIncidentComment(incident_id, issue_key, sessionKey):
+
+    uri = "/services/alert_manager/helpers"
+    postargs = '{"action": "write_log_entry", "log_action": "comment", "origin": "externalworkflowaction", "incident_id": "%s", "comment": "Updated external_reference_id=%s"}' % (incident_id, issue_key)
+
+    try:
+        serverResponse, serverContent = rest.simpleRequest(uri, sessionKey=sessionKey, postargs=json.loads(postargs), method='POST')
+  
+    except:
+        print >> sys.stderr, "ERROR Unexpected error: %s" % e
+        serverContent= None
+    return
+    
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--execute":
