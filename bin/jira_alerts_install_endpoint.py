@@ -4,7 +4,7 @@ from generate_jira_dialog import generate_jira_dialog
 from jira_helpers import *
 
 PASSWORD_PLACEHOLDER = '*******'
-DEFAULT_SETTINGS = ('project_key', 'issue_type', 'priority')
+DEFAULT_SETTINGS = ('project_key', 'issue_type', 'priority', 'assignee')
 
 class JiraAlertsInstallHandler(admin.MConfigHandler):
     def __init__(self, *args):
