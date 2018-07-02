@@ -14,11 +14,11 @@ def send_message(payload, sessionKey):
     ISSUE_REST_PATH = "/rest/api/latest/issue"
     url = config.get('jira_url')
     jira_url = url + ISSUE_REST_PATH
+    
     username = config.get('jira_username')
-    password = get_jira_password(payload.get('server_uri'), payload.get('session_key'))
+    password = get_jira_password(payload.get('server_uri'), sessionKey)
 
-    # create outbound JSON message body
-    body = json.dumps({
+    body = {
         "fields": {
             "project": {
                 "key" : config.get('project_key')
@@ -34,17 +34,22 @@ def send_message(payload, sessionKey):
             "assignee": {
                 "name": config.get('assignee')
             }
-        }
-    })
+        } 
+    }
+
+    customfields = { k: v for k, v in config.iteritems() if k.startswith('customfield_') }
+
+    for k,v in customfields.iteritems():
+        body['fields'][k] = v
+
+    # create outbound JSON message body
+    data = json.dumps(body)
 
     # create outbound request object
     try:
         headers = {"Content-Type": "application/json"}
-        result = requests.post(url=jira_url, data=body, headers=headers, auth=(username, password))
+        result = requests.post(url=jira_url, data=data, headers=headers, auth=(username, password))
              
-        
-        print >>sys.stderr, "INFO Jira server HTTP status= %s" % result.text
-        print >>sys.stderr, "INFO Jira server response: %s" % result.text
     except Exception, e:
         print >> sys.stderr, "ERROR Error sending message: %s" % e
         return False
@@ -63,7 +68,29 @@ def send_message(payload, sessionKey):
 
     setIncidentComment(incident_id, issue_key, sessionKey)
 
+    # Fetch Alert Manager Comment and add to Issue
+    comment = config.get('comment')
+    if comment is not None:
+        addIssueComment(comment, issue_key, payload, sessionKey)
 
+def addIssueComment(comment, issue_key, payload, sessionKey):
+    config = payload.get('configuration')
+
+    ISSUE_REST_PATH = "/rest/api/latest/issue/%s/comment" % issue_key
+    url = config.get('jira_url')
+    jira_url = url + ISSUE_REST_PATH
+    username = config.get('jira_username')
+    password = get_jira_password(payload.get('server_uri'), payload.get('session_key'))
+
+    body = '{"body": "%s"}' % comment
+    
+    try:
+        headers = {"Content-Type": "application/json"}
+        result = requests.post(url=jira_url, data=body, headers=headers, auth=(username, password))
+
+    except Exception, e:
+        print >> sys.stderr, "ERROR Error sending message: %s" % e
+        return False
     
 def getIncidentKey(incident_id, sessionKey):
     query = '{"incident_id": "%s"}' % incident_id
