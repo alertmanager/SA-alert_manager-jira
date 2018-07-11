@@ -1,36 +1,57 @@
+
 <form class="form-horizontal form-complex">
     <div class="control-group">
-        <label class="control-label" for="project_key">Project Key</label>
+        <label class="control-label" for="project_key">Project</label>
 
         <div class="controls">
-            <input type="text" name="action.jira.param.project_key" id="project_key" />
+            <select name="action.jira.param.project_key" id="project_key">
+                <option value="SPLUN">SPLUN - splunk</option>
+            </select>
             <span class="help-block">Enter the project key to create Issues under.</span>
         </div>
     </div>
     <div class="control-group">
-        <label class="control-label" for="issue_type">Issue Type</label>
+        <label class="control-label" for="issue_type">Type</label>
 
         <div class="controls">
-            <input type="text" name="action.jira.param.issue_type" id="issue_type" />
+            <select name="action.jira.param.issue_type" id="issue_type">
+                <option value="Task">Task</option>
+		<option value="Sub-task">Sub-task</option>
+            </select>
             <span class="help-block">Enter an Issue type.</span>
         </div>
     </div>
     <div class="control-group">
-        <label class="control-label" for="assignee">Issue Assignee</label>
+        <label class="control-label" for="jira_priority">Priority</label>
 
         <div class="controls">
-            <input type="text" name="action.jira.param.assignee" id="assignee" />
-            <span class="help-block">Enter an assigne for the Issue.</span>
+            <select name="action.jira.param.priority" id="jira_priority">
+                <option value="Highest">Highest</option>
+		<option value="High">High</option>
+		<option value="Medium">Medium</option>
+		<option value="Low">Low</option>
+		<option value="Lowest">Lowest</option>
+            </select>
+            <span class="help-block">Select the issue priority.</span>
         </div>
     </div>
-    <div class="control-group">
-        <label class="control-label" for="summary">Issue Summary</label>
 
+    <div class="control-group">
+        <label class="control-label" for="summary">Assignee</label>
+        <div class="controls">
+            <input type="text" name="action.jira.param.assignee" id="jira_assignee" />
+            <span class="help-block">Enter an assignee for the Issue.</span>
+        </div>
+    </div>
+
+    <div class="control-group">
+        <label class="control-label" for="summary">Summary</label>
         <div class="controls">
             <input type="text" name="action.jira.param.summary" id="summary" />
             <span class="help-block">Enter a summary of the Issue.</span>
         </div>
     </div>
+
     <div class="control-group">
         <label class="control-label" for="description">Description</label>
 
