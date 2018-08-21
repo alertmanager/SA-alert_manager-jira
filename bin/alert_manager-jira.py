@@ -18,7 +18,7 @@ def send_message(payload, sessionKey):
     username = config.get('jira_username')
     password = get_jira_password(payload.get('server_uri'), sessionKey)
 
-    body = {
+    body= {
         "fields": {
             "project": {
                 "key" : config.get('project_key')
@@ -37,10 +37,18 @@ def send_message(payload, sessionKey):
         } 
     }
 
+    customfield_types = getCustomFieldTypes(payload, sessionKey)
+
     customfields = { k: v for k, v in config.iteritems() if k.startswith('customfield_') }
 
     for k,v in customfields.iteritems():
-        body['fields'][k] = v
+        
+        if customfield_types.get(k) == "textfield":
+            body['fields'][k] = v
+        elif customfield_types.get(k) == "textarea":
+            body['fields'][k] = v
+        elif customfield_types.get(k) == "select":
+            body['fields'][k] = { "value": v }
 
     # create outbound JSON message body
     data = json.dumps(body)
@@ -73,6 +81,8 @@ def send_message(payload, sessionKey):
     if comment is not None:
         addIssueComment(comment, issue_key, payload, sessionKey)
 
+
+
 def addIssueComment(comment, issue_key, payload, sessionKey):
     config = payload.get('configuration')
 
@@ -87,6 +97,41 @@ def addIssueComment(comment, issue_key, payload, sessionKey):
     try:
         headers = {"Content-Type": "application/json"}
         result = requests.post(url=jira_url, data=body, headers=headers, auth=(username, password))
+
+    except Exception, e:
+        print >> sys.stderr, "ERROR Error sending message: %s" % e
+        return False
+
+def getCustomFieldTypes(payload, sessionKey):
+    config = payload.get('configuration')
+    project_key = config.get('project_key')
+
+    username = config.get('jira_username')
+    password = get_jira_password(payload.get('server_uri'), sessionKey)
+    
+    FIELDS_REST_PATH = "/rest/api/latest/issue/createmeta?projectKeys=%s&expand=projects.issuetypes.fields&" % project_key
+    url = config.get('jira_url')
+
+    jira_fields_url = url + FIELDS_REST_PATH
+
+    try:
+        headers = {"Content-Type": "application/json"}
+        result = requests.get(url=jira_fields_url, headers=headers, auth=(username, password))
+        
+        meta = result.json()
+
+        customfield_types = {}
+
+        for issuetype in meta['projects'][0]['issuetypes']:
+
+            for field in (issuetype.get('fields')):
+
+                if field.startswith('customfield_'):
+                            fieldtype = meta['projects'][0]['issuetypes'][0]['fields'][field]['schema']['custom']
+                            fieldtype = fieldtype.split(":",1)[1]                       
+                            customfield_types[field] = fieldtype
+
+        return customfield_types
 
     except Exception, e:
         print >> sys.stderr, "ERROR Error sending message: %s" % e
