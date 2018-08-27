@@ -6,6 +6,10 @@ import splunk.rest as rest
 
 from jira_helpers import get_jira_password
 
+def log(message):
+    with open('/tmp/alert_manager-jira.log','a') as f:
+        print >> f, message
+
 # creates outbound message from alert payload contents
 # and attempts to send to the specified endpoint
 def send_message(payload, sessionKey):
@@ -49,6 +53,8 @@ def send_message(payload, sessionKey):
             body['fields'][k] = v
         elif customfield_types.get(k) == "select":
             body['fields'][k] = { "value": v }
+        elif customfield_types.get(k) == "multiselect":
+            body['fields'][k] = [ {"value": v } ]
 
     # create outbound JSON message body
     data = json.dumps(body)
