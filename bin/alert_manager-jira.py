@@ -133,8 +133,10 @@ def getCustomFieldTypes(payload, sessionKey):
         meta = result.json()
 
         customfield_types = {}
-        for m in re.finditer('customfield_(?P<field>\d+).*?"custom": "(?P<fieldtype>\S+)"', json.dumps(meta), re.MULTILINE):
-            customfield_types[m.group('field')] = m.group('fieldtype')
+        for m in re.finditer('(?P<field>customfield_\d+).*?"custom": "(?P<fieldtype>\S+)"', json.dumps(meta), re.MULTILINE):
+            fieldtype = m.group('fieldtype')
+            fieldtype = fieldtype.split(":",1)[1]
+            customfield_types[m.group('field')] = fieldtype
 
         return customfield_types
 
