@@ -1,6 +1,7 @@
 import sys
 import json
 import requests
+import re
 import urllib
 import splunk.rest as rest
 
@@ -63,7 +64,11 @@ def send_message(payload, sessionKey):
     try:
         headers = {"Content-Type": "application/json"}
         result = requests.post(url=jira_url, data=data, headers=headers, auth=(username, password))
-             
+
+        if result.status_code>299:
+            print >> sys.stderr, "ERROR Unable to open JIRA Ticket: http_status=%s http_response=%s" % (result.status_code, result.text)
+            sys.exit(2)
+                
     except Exception, e:
         print >> sys.stderr, "ERROR Error sending message: %s" % e
         return False
@@ -120,6 +125,7 @@ def getCustomFieldTypes(payload, sessionKey):
 
     jira_fields_url = url + FIELDS_REST_PATH
 
+
     try:
         headers = {"Content-Type": "application/json"}
         result = requests.get(url=jira_fields_url, headers=headers, auth=(username, password))
@@ -127,20 +133,14 @@ def getCustomFieldTypes(payload, sessionKey):
         meta = result.json()
 
         customfield_types = {}
-
-        for issuetype in meta['projects'][0]['issuetypes']:
-
-            for field in (issuetype.get('fields')):
-
-                if field.startswith('customfield_'):
-                            fieldtype = meta['projects'][0]['issuetypes'][0]['fields'][field]['schema']['custom']
-                            fieldtype = fieldtype.split(":",1)[1]                       
-                            customfield_types[field] = fieldtype
+        for m in re.finditer('customfield_(?P<field>\d+).*?"custom": "(?P<fieldtype>\S+)"', json.dumps(meta), re.MULTILINE):
+            customfield_types[m.group('field')] = m.group('fieldtype')
 
         return customfield_types
 
     except Exception, e:
         print >> sys.stderr, "ERROR Error sending message: %s" % e
+        log(e)
         return False
     
 def getIncidentKey(incident_id, sessionKey):
