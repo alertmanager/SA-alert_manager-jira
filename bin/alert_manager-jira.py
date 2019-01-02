@@ -91,8 +91,18 @@ def send_message(payload, sessionKey):
     comment = config.get('comment')
     if comment is not None:
         addIssueComment(comment, issue_key, payload, sessionKey)
+    
+    next_status = config.get('alert_manager_next_status')
+    if next_status is not None:
 
+        query = '{"incident_id": "%s"}' % incident_id
+        uri = '/servicesNS/nobody/alert_manager/storage/collections/data/incidents?query=%s' % urllib.quote(query)
+        
+        incident=getRestData(uri, sessionKey, output_mode='default')
+        previous_status = incident[0]["status"]
 
+        setIncidentStatus(next_status, incident_key, sessionKey)
+        setIncidentChangeHistory(incident_id, next_status, previous_status, sessionKey)
 
 def addIssueComment(comment, issue_key, payload, sessionKey):
     config = payload.get('configuration')
@@ -111,7 +121,7 @@ def addIssueComment(comment, issue_key, payload, sessionKey):
 
     except Exception, e:
         print >> sys.stderr, "ERROR Error sending message: %s" % e
-        return False
+        return False        
 
 def getCustomFieldTypes(payload, sessionKey):
     config = payload.get('configuration')
@@ -155,7 +165,6 @@ def getIncidentKey(incident_id, sessionKey):
 
     return incident_key
 
-
 def setIncidentExternalReferenceId(issue_key, incident_key, sessionKey):
     uri = '/servicesNS/nobody/alert_manager/storage/collections/data/incidents/%s' % incident_key
     
@@ -164,6 +173,15 @@ def setIncidentExternalReferenceId(issue_key, incident_key, sessionKey):
     incident['external_reference_id'] = issue_key
 
     getRestData(uri, sessionKey, json.dumps(incident))
+
+def setIncidentStatus(status, incident_key, sessionKey):
+    uri = '/servicesNS/nobody/alert_manager/storage/collections/data/incidents/%s' % incident_key
+    
+    incident = getRestData(uri, sessionKey, output_mode='default')
+
+    incident['status'] = status
+
+    getRestData(uri, sessionKey, json.dumps(incident))    
 
 def getRestData(uri, sessionKey, data = None, output_mode = 'json'):
     try:
@@ -187,7 +205,6 @@ def getRestData(uri, sessionKey, data = None, output_mode = 'json'):
 
     return returnData
 
-
 def setIncidentComment(incident_id, issue_key, sessionKey):
 
     uri = "/services/alert_manager/helpers"
@@ -200,6 +217,21 @@ def setIncidentComment(incident_id, issue_key, sessionKey):
         print >> sys.stderr, "ERROR Unexpected error: %s" % e
         serverContent= None
     return
+
+def setIncidentChangeHistory(incident_id, status, previous_status, sessionKey):
+
+    user = payload.get('owner')
+
+    uri = "/services/alert_manager/helpers"
+    postargs = '{"action": "write_log_entry", "log_action": "change", "origin": "externalworkflowaction", "incident_id": "%s", "user": "%s", "status": "%s", "previous_status": "%s"}' % (incident_id, user, status, previous_status)
+
+    try:
+        serverResponse, serverContent = rest.simpleRequest(uri, sessionKey=sessionKey, postargs=json.loads(postargs), method='POST')
+  
+    except:
+        print >> sys.stderr, "ERROR Unexpected error: %s" % e
+        serverContent= None
+    return    
     
 
 if __name__ == "__main__":
@@ -209,7 +241,6 @@ if __name__ == "__main__":
             # retrieving message payload from splunk
             raw_payload = sys.stdin.read()
             payload = json.loads(raw_payload)
-
             sessionKey = payload.get('session_key')
 
             send_message(payload, sessionKey)

@@ -5,3 +5,4 @@ action.jira.param.summary = <string>
 action.jira.param.description = <string>
 action.jira.param.issue_type = <string>
 action.jira.param.assignee = <string>
+action.jira.alert_manager_next_status = <string>
