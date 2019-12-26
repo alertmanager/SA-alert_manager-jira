@@ -10,3 +10,4 @@ MANIFEST
 RELEASE-VERSION
 .coverage
 nosetests.xml
+.vscode/settings.json
