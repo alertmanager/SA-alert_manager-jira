@@ -3,17 +3,20 @@ import json
 import requests
 import re
 import urllib
+import os.path
 import splunk.rest as rest
+import splunk.appserver.mrsparkle.lib.util as util
 
+dir = os.path.join(util.get_apps_dir(), 'SA-alert_manager-jira', 'bin', 'lib')
+if not dir in sys.path:
+    sys.path.append(dir)
+
+from AlertManagerJiraLogger import *
 from jira_helpers import get_jira_password
 
-def log(message):
-    with open('/tmp/alert_manager-jira.log','a') as f:
-        print >> f, message
-
-# creates outbound message from alert payload contents
-# and attempts to send to the specified endpoint
 def send_message(payload, sessionKey):
+    log.info('Starting send_massage')
+
     config = payload.get('configuration')
 
     ISSUE_REST_PATH = "/rest/api/latest/issue"
@@ -22,6 +25,8 @@ def send_message(payload, sessionKey):
     
     username = config.get('jira_username')
     password = get_jira_password(payload.get('server_uri'), sessionKey)
+
+    log.debug("Payload %s:" % json.dumps(payload))
 
     body= {
         "fields": {
@@ -46,19 +51,43 @@ def send_message(payload, sessionKey):
 
     customfields = { k: v for k, v in config.iteritems() if k.startswith('customfield_') }
 
+    log.debug("Customfields %s:" % customfields)
+
     for k,v in customfields.iteritems():
-        
+
+        log.debug("start")
         if customfield_types.get(k) == "textfield":
+            log.debug("Customfield %s=%s" % (customfield_types.get(k), v))
             body['fields'][k] = v
+
         elif customfield_types.get(k) == "textarea":
+            log.debug("Customfield %s=%s" % (customfield_types.get(k), v))
             body['fields'][k] = v
+
         elif customfield_types.get(k) == "select":
+            log.debug("Customfield %s=%s" % (customfield_types.get(k), v))
             body['fields'][k] = { "value": v }
+
         elif customfield_types.get(k) == "multiselect":
+            log.debug("Customfield %s=%s" % (customfield_types.get(k), v))
             body['fields'][k] = [ {"value": v } ]
 
+        elif customfield_types.get(k) == "sd-customer-organizations":
+            log.debug("Customfield %s=%s" % (customfield_types.get(k), v))
+            orglist = map(int, v.split(","))
+            body['fields'][k] = orglist
+
+        else:
+            log.warn("Customfield unhandled: key=%s value=%s" % (k, v))
+            
+    
     # create outbound JSON message body
+
+    log.debug("Body: %s" % body)
+
     data = json.dumps(body)
+
+    log.debug("Data: %s" % data)
 
     # create outbound request object
     try:
@@ -66,11 +95,14 @@ def send_message(payload, sessionKey):
         result = requests.post(url=jira_url, data=data, headers=headers, auth=(username, password))
 
         if result.status_code>299:
-            print >> sys.stderr, "ERROR Unable to open JIRA Ticket: http_status=%s http_response=%s" % (result.status_code, result.text)
+            log.error("Unable to open JIRA Ticket: http_status=%s http_response=%s" % (result.status_code, result.text))
             sys.exit(2)
+        else:
+            log.info("Incident creation result: %s" % result.text)
+
                 
     except Exception, e:
-        print >> sys.stderr, "ERROR Error sending message: %s" % e
+        log.error("Error sending message: %s" % e)
         return False
 
     # Get Results
@@ -107,9 +139,9 @@ def send_message(payload, sessionKey):
 def addIssueComment(comment, issue_key, payload, sessionKey):
     config = payload.get('configuration')
 
-    ISSUE_REST_PATH = "/rest/api/latest/issue/%s/comment" % issue_key
+    issue_rest_path = "/rest/api/latest/issue/%s/comment" % issue_key
     url = config.get('jira_url')
-    jira_url = url + ISSUE_REST_PATH
+    jira_url = url + issue_rest_path
     username = config.get('jira_username')
     password = get_jira_password(payload.get('server_uri'), payload.get('session_key'))
 
@@ -120,21 +152,26 @@ def addIssueComment(comment, issue_key, payload, sessionKey):
         result = requests.post(url=jira_url, data=body, headers=headers, auth=(username, password))
 
     except Exception, e:
-        print >> sys.stderr, "ERROR Error sending message: %s" % e
+        log.error("ERROR Error sending message: %s" % e)
         return False        
 
 def getCustomFieldTypes(payload, sessionKey):
+    log.info("Start getCustomFieldTypes")
     config = payload.get('configuration')
     project_key = config.get('project_key')
+    issue_type = config.get('issue_type')
 
     username = config.get('jira_username')
     password = get_jira_password(payload.get('server_uri'), sessionKey)
     
-    FIELDS_REST_PATH = "/rest/api/latest/issue/createmeta?projectKeys=%s&expand=projects.issuetypes.fields&" % project_key
+    field_rest_query = "/rest/api/latest/issue/createmeta?projectKeys=%s&expand=projects.issuetypes.fields&issuetypeNames=%s" % (project_key, urllib.quote(issue_type))
+    log.debug("getCustomFieldTypes field_rest_query=%s" % field_rest_query)
+
     url = config.get('jira_url')
 
-    jira_fields_url = url + FIELDS_REST_PATH
+    jira_fields_url = url + field_rest_query
 
+    log.debug("jira_fields_url=%s" % jira_fields_url)
 
     try:
         headers = {"Content-Type": "application/json"}
@@ -148,11 +185,11 @@ def getCustomFieldTypes(payload, sessionKey):
             fieldtype = fieldtype.split(":",1)[1]
             customfield_types[m.group('field')] = fieldtype
 
+        log.debug("customfield_types: %s" % customfield_types)
         return customfield_types
 
     except Exception, e:
-        print >> sys.stderr, "ERROR Error sending message: %s" % e
-        log(e)
+        log.error("ERROR Error sending message: %s" % e)
         return False
     
 def getIncidentKey(incident_id, sessionKey):
@@ -233,9 +270,10 @@ def setIncidentChangeHistory(incident_id, status, previous_status, sessionKey):
         serverContent= None
     return    
     
-
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--execute":
+        log = setupLogger('alert_manager-jira')
+
         try:
 
             # retrieving message payload from splunk
