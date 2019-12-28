@@ -19,6 +19,15 @@ def send_message(payload, sessionKey):
 
     config = payload.get('configuration')
 
+    if (config.get('testmode') == 'true'):
+        testmode=True
+        log.info("Add-on testmode enabled. Not updating Alert Manager Incidents")
+    elif (config.get('testmode'.lower()) == '1'):
+        testmode=True
+        log.info("Add-on testmode enabled. Not updating Alert Manager Incidents")     
+    else:
+        testmode=False
+
     ISSUE_REST_PATH = "/rest/api/latest/issue"
     url = config.get('jira_url')
     jira_url = url + ISSUE_REST_PATH
@@ -111,30 +120,33 @@ def send_message(payload, sessionKey):
     # Fetch Jira issueKey
     issue_key = resultJSON["key"]
 
-    # Fetch Alert Manager incident_id (param.incident_id)
-    incident_id=config.get('incident_id')
-    incident_key = getIncidentKey(incident_id, sessionKey)    
+    # Only run Alert Manager Part if not in Testmode
+    if testmode is False:
+        # Fetch Alert Manager incident_id (param.incident_id)
 
-    setIncidentExternalReferenceId(issue_key, incident_key, sessionKey)
+        incident_id=config.get('incident_id')
+        incident_key = getIncidentKey(incident_id, sessionKey)    
 
-    setIncidentComment(incident_id, issue_key, sessionKey)
+        setIncidentExternalReferenceId(issue_key, incident_key, sessionKey)
 
-    # Fetch Alert Manager Comment and add to Issue
-    comment = config.get('comment')
-    if comment is not None:
-        addIssueComment(comment, issue_key, payload, sessionKey)
-    
-    next_status = config.get('alert_manager_next_status')
-    if next_status is not None:
+        setIncidentComment(incident_id, issue_key, sessionKey)
 
-        query = '{"incident_id": "%s"}' % incident_id
-        uri = '/servicesNS/nobody/alert_manager/storage/collections/data/incidents?query=%s' % urllib.quote(query)
+        # Fetch Alert Manager Comment and add to Issue
+        comment = config.get('comment')
+        if comment is not None:
+            addIssueComment(comment, issue_key, payload, sessionKey)
         
-        incident=getRestData(uri, sessionKey, output_mode='default')
-        previous_status = incident[0]["status"]
+        next_status = config.get('alert_manager_next_status')
+        if next_status is not None:
 
-        setIncidentStatus(next_status, incident_key, sessionKey)
-        setIncidentChangeHistory(incident_id, next_status, previous_status, sessionKey)
+            query = '{"incident_id": "%s"}' % incident_id
+            uri = '/servicesNS/nobody/alert_manager/storage/collections/data/incidents?query=%s' % urllib.quote(query)
+            
+            incident=getRestData(uri, sessionKey, output_mode='default')
+            previous_status = incident[0]["status"]
+
+            setIncidentStatus(next_status, incident_key, sessionKey)
+            setIncidentChangeHistory(incident_id, next_status, previous_status, sessionKey)    
 
 def addIssueComment(comment, issue_key, payload, sessionKey):
     config = payload.get('configuration')
