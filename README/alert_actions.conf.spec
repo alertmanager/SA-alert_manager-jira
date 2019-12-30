@@ -7,4 +7,7 @@ param.project_key = <string>
 param.priority = <string>
 param.assignee = <string>
 param.alert_manager_next_status = <string>
+param.jira_servicedesk_mode = <string>
+param.servicedesk_id = <string>
+param.requesttype_id = <string>
 param.testmode = <string>

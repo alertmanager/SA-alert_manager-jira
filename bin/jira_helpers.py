@@ -32,7 +32,10 @@ def update_jira_settings(jira_settings, server_uri, session_key):
             'param.project_key': jira_settings.get('project_key', ''),
             'param.issue_type': jira_settings.get('issue_type', ''),
             'param.priority': jira_settings.get('priority', ''),
-            'param.assignee': jira_settings.get('assignee', '')
+            'param.assignee': jira_settings.get('assignee', ''),
+            'param.jira_servicedesk_mode': jira_settings.get('jira_servicedesk_mode', ''),
+            'param.servicedesk_id': jira_settings.get('servicedesk_id', ''),
+            'param.requesttype_id': jira_settings.get('requesttype_id', '')
         },
         headers=splunkd_auth_header(session_key),
         verify=False).json()
@@ -71,7 +74,3 @@ def get_jira_action_config(server_uri, session_key):
 
 def jira_url(jira_settings, endpoint):
     return '%s/rest/api/latest%s' % (jira_settings.get('jira_url'), endpoint)
-
-def update_jira_dialog(content, server_uri, session_key):
-    uri = server_uri + '/servicesNS/nobody/SA-alert_manager-jira/data/ui/alerts/alert_manager-jira'
-    requests.post(url=uri, data={'eai:data': content}, headers=splunkd_auth_header(session_key), verify=False)
