@@ -198,11 +198,14 @@ def send_message_jsd(payload, sessionKey):
     log.debug("Body: %s" % body)
 
     if config.get('request_participants') is not None and config.get('request_participants')!='':
-            #request_participants = map(str.strip, config.get('request_participants').split(",")
             request_participants = config.get('request_participants')
             request_participants_list = [request_participant.strip() for request_participant in request_participants.split(',')]
             
             body['requestParticipants'] = request_participants_list
+
+    if config.get('raise_on_behalf_of') is not None and config.get('raise_on_behalf_of')!='':
+            raise_on_behalf_of = config.get('raise_on_behalf_of')            
+            body['raiseOnBehalfOf'] = raise_on_behalf_of      
 
     data = json.dumps(body)
 
@@ -272,6 +275,7 @@ def send_message_jsd(payload, sessionKey):
                         'summary',
                         'servicedesk_id',
                         'request_participants',
+                        'raise_on_behalf_of',
                         'requesttype_id']
     
     for param in default_params:
