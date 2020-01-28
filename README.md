@@ -21,7 +21,7 @@ Within Alert Manager, you can use it as an external workflow action.
 
 For Jira Service Desk you can use:
 
-```| sendalert alert_manager-jira param.summary="My Summary" param.description="My Description" param.request_participants="<email1>[,<email2>]+" param.organization_names="<customer1>[,<customer2>]+" param.customfield_10200="<customfieldvalue>" param.requesttype_id="<requesttype_id>" param.incident_id="$incident_id$"```
+```| sendalert alert_manager-jira param.summary="My Summary" param.description="My Description" param.request_participants="<email1>[,<email2>]+" param.organization_names="<customer1>[,<customer2>]+" param.customfield_10200="<customfieldvalue>" param.requesttype_id="<requesttype_id>" param.incident_id="$incident_id$" param.raise_on_behalf_of="<raise_on_behalf_of>" param.assignee="<assignee>"```
 
 The workflow action will update the external_reference_id and also add a comment.
 

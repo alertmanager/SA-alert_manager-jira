@@ -337,7 +337,6 @@ def send_message_jsd(payload, sessionKey):
 
             body['fields'][customfield_id] = organization_ids
 
-        
         log.debug("Issue Update body: %s" % body)
         data = json.dumps(body)
         log.debug("Issue Update data: %s" % data)
@@ -360,6 +359,36 @@ def send_message_jsd(payload, sessionKey):
         except Exception, e:
             log.error("Error sending message: %s" % e)
             return False
+
+
+        # Get assignee
+        if (additional_params.get('assignee') is not None and additional_params.get('assignee')!=''):
+            body = {}
+
+            body['name'] = additional_params.get('assignee')
+
+            data = json.dumps(body)
+            log.debug("Issue Update data: %s" % data)
+
+            ISSUE_UPDATE_REST_PATH = "/rest/api/latest/issue/" + issue_key + "/assignee"
+            url = config.get('jira_url')
+            jira_url = url + ISSUE_UPDATE_REST_PATH
+
+            # create outbound request object
+            try:
+                headers = {"Content-Type": "application/json"}
+                result = requests.put(url=jira_url, data=data, headers=headers, auth=(username, password))
+
+                if result.status_code>299:
+                    log.error("Unable to update Jira Ticket: http_status=%s http_response=%s" % (result.status_code, result.text))
+                    sys.exit(2)
+                else:
+                    log.info("Incident update:http_status=%s http result=%s" % (result.status_code, result.text))
+
+            except Exception, e:
+                log.error("Error sending message: %s" % e)
+                return False
+
 
         # Only run Alert Manager Part if not in Testmode
         log.info("Testmode: %s:" % testmode)
