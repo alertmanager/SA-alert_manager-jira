@@ -275,7 +275,9 @@ def send_message_jsd(payload, sessionKey):
                         'description',
                         'summary',
                         'servicedesk_id',
-                        'requesttype_id']
+                        'requesttype_id',
+                        'request_participants',
+                        'raise_on_behalf_of']
     
     for param in default_params:
         try:
