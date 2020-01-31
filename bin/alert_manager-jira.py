@@ -198,6 +198,7 @@ def send_message_jsd(payload, sessionKey):
     log.debug("Body: %s" % body)
 
     if config.get('request_participants') is not None and config.get('request_participants')!='':
+            log.debug("Handling request_participants: %s" % config.get('request_participants'))
             request_participants = config.get('request_participants')
             request_participants_list = [request_participant.strip() for request_participant in request_participants.split(',')]
             
@@ -274,8 +275,6 @@ def send_message_jsd(payload, sessionKey):
                         'description',
                         'summary',
                         'servicedesk_id',
-                        'request_participants',
-                        'raise_on_behalf_of',
                         'requesttype_id']
     
     for param in default_params:
@@ -325,7 +324,10 @@ def send_message_jsd(payload, sessionKey):
                 log.warn("Customfield unhandled: key=%s value=%s" % (k, v))
 
         # Get organization_ids from names
+
         if (additional_params.get('organization_names') is not None and additional_params.get('organization_names')!=''):
+            log.debug("Handling organization_names: %s" % additional_params.get('organization_names'))
+
             organization_names = additional_params.get('organization_names')
             organization_ids = getOrganizationIdByName(payload, sessionKey, organization_names)
             log.debug("organization_ids: %s" % organization_ids)
